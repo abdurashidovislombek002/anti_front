@@ -30,6 +30,9 @@ export function formatChatTime(dateValue) {
 }
 
 export function getOtherUser(chat, currentUserId) {
+  // Backend "peer" deb, allaqachon topilgan foydalanuvchini qaytaradi
+  if (chat.peer) return chat.peer
+
   const members = chat.members || chat.users || chat.participants || []
   return members.find((user) => user.id !== currentUserId) || members[0] || null
 }
