@@ -7,12 +7,14 @@ import { getOtherUser, getInitials, formatTime } from '../../utils/format'
 import MessageBubble from './MessageBubble'
 import MessageInput from './MessageInput'
 
+const EMPTY_ARRAY = []
+
 export default function ChatWindow({ chat }) {
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
-  const messages = useChatStore((state) => state.messages[chat.id] || [])
+  const messages = useChatStore((state) => state.messages[chat.id] || EMPTY_ARRAY)
   const isLoadingMessages = useChatStore((state) => state.isLoadingMessages)
-  const typingUsers = useChatStore((state) => state.typingUsers[chat.id] || [])
+  const typingUsers = useChatStore((state) => state.typingUsers[chat.id] || EMPTY_ARRAY)
   const sendMessage = useChatStore((state) => state.sendMessage)
 
   const bottomRef = useRef(null)
