@@ -1,87 +1,156 @@
 import { create } from 'zustand'
 import api from '../api/axios'
-import { connectSocket, disconnectSocket } from '../socket/socket'
-import { useChatStore } from './useChatStore'
 
-export const useAuthStore = create((set, get) => ({
-  user: null,
-  token: localStorage.getItem('token') || null,
-  isLoading: false,
+const normalizeChat = (chat) => ({
+  ...chat,
+  id: chat.id ?? chat._id,
+  members: chat.members || chat.users || chat.participants || [],
+  lastMessage: chat.lastMessage || null,
+})
+
+const normalizeMessage = (message) => ({
+  ...message,
+  id: message.id ?? message._id,
+  chatId: message.chatId ?? message.chat_id,
+  sender: {
+    id: message.sender?.id ?? message.senderId ?? message.sender_id,
+    username: message.sender?.username ?? message.senderName,
+  },
+  text: message.text ?? message.content ?? '',
+})
+
+let typingTimers = {}
+
+const initialTypingUsers = {}
+
+export const useChatStore = create((set, get) => ({
+  chats: [],
+  messages: {},
+  typingUsers: initialTypingUsers,
+  activeChatId: null,
+  isLoadingChats: false,
+  isLoadingMessages: false,
   error: null,
 
-  login: async (identifier, password) => {
-    set({ isLoading: true, error: null })
+  fetchChats: async () => {
+    set({ isLoadingChats: true, error: null })
     try {
-      const { data } = await api.post('/auth/login', {
-        username: identifier,
-        password,
-      })
-      const token = data.token || data.accessToken
-      const user = data.user || data
-
-      if (!token) {
-        throw new Error('Server token qaytarmadi')
-      }
-
-      localStorage.setItem('token', token)
-      connectSocket(token)
-      set({ user, token, isLoading: false, error: null })
-      return { ok: true }
+      const { data } = await api.get('/chats')
+      const chats = (data.chats || data || []).map(normalizeChat)
+      set({ chats, isLoadingChats: false })
     } catch (error) {
       set({
-        isLoading: false,
-        error: error.response?.data?.message || error.response?.data?.error || 'Kirish amalga oshmadi',
+        isLoadingChats: false,
+        error: error.response?.data?.message || 'Chatlar yuklanmadi',
       })
+    }
+  },
+
+  selectChat: (chatId) => {
+    set({ activeChatId: chatId })
+  },
+
+  fetchMessages: async (chatId) => {
+    set({ isLoadingMessages: true, error: null })
+    try {
+      const { data } = await api.get(`/chats/${chatId}/messages`)
+      const list = (data.messages || (Array.isArray(data) ? data : [])).map(
+        normalizeMessage,
+      )
+      set((state) => ({
+        messages: { ...state.messages, [chatId]: list },
+        isLoadingMessages: false,
+      }))
+    } catch (error) {
+      set({
+        isLoadingMessages: false,
+        error: error.response?.data?.message || 'Xabarlar yuklanmadi',
+      })
+    }
+  },
+
+  sendMessage: async (chatId, text) => {
+    const trimmed = text.trim()
+    if (!trimmed) return { ok: false }
+
+    try {
+      const { data } = await api.post(`/chats/${chatId}/messages`, { content: trimmed })
+      const message = normalizeMessage(data.message || data)
+      get().addMessage(chatId, message)
+      return { ok: true }
+    } catch (error) {
+      set({ error: error.response?.data?.message || 'Xabar yuborilmadi' })
       return { ok: false }
     }
   },
 
-  register: async ({ username, phone, password }) => {
-    set({ isLoading: true, error: null })
-    try {
-      const { data } = await api.post('/auth/register', {
-        username,
-        phone,
-        password,
-      })
-      const token = data.token || data.accessToken
-      const user = data.user || data
+  addMessage: (chatId, message) => {
+    const normalized = normalizeMessage(message)
+    const chatKey = normalized.chatId || chatId
 
-      if (!token) {
-        throw new Error('Server token qaytarmadi')
+    set((state) => {
+      const list = state.messages[chatKey] || []
+      if (list.some((m) => m.id && m.id === normalized.id)) return state
+
+      return {
+        messages: { ...state.messages, [chatKey]: [...list, normalized] },
+        chats: state.chats.map((chat) =>
+          chat.id === chatKey ? { ...chat, lastMessage: normalized } : chat,
+        ),
       }
+    })
+  },
 
-      localStorage.setItem('token', token)
-      connectSocket(token)
-      set({ user, token, isLoading: false, error: null })
-      return { ok: true }
-    } catch (error) {
-      set({
-        isLoading: false,
-        error: error.response?.data?.message || error.response?.data?.error || 'Ro\'yxatdan o\'tish amalga oshmadi',
+  handleIncomingMessage: (message) => {
+    const chatId = message.chatId || message.chat_id
+    if (!chatId) return
+    get().addMessage(chatId, message)
+  },
+
+  setTyping: (chatId, username, isTyping) => {
+    if (!chatId || !username) return
+
+    if (!isTyping) {
+      set((state) => {
+        const current = state.typingUsers[chatId] || []
+        const next = current.filter((u) => u !== username)
+        return {
+          typingUsers: {
+            ...state.typingUsers,
+            ...(next.length === 0 ? { [chatId]: [] } : { [chatId]: next }),
+          },
+        }
       })
-      return { ok: false }
+      return
     }
+
+    set((state) => {
+      const current = state.typingUsers[chatId] || []
+      if (current.includes(username)) return state
+      return {
+        typingUsers: { ...state.typingUsers, [chatId]: [...current, username] },
+      }
+    })
+
+    if (typingTimers[`${chatId}-${username}`]) {
+      clearTimeout(typingTimers[`${chatId}-${username}`])
+    }
+    typingTimers[`${chatId}-${username}`] = setTimeout(() => {
+      get().setTyping(chatId, username, false)
+      delete typingTimers[`${chatId}-${username}`]
+    }, 4000)
   },
 
-  fetchMe: async () => {
-    const { token } = get()
-    if (!token) return
-
-    try {
-      const { data } = await api.get('/auth/me')
-      const user = data.user || data
-      set({ user })
-      connectSocket(token)
-    } catch {
-      get().logout()
-    }
-  },
-
-  logout: () => {
-    localStorage.removeItem('token')
-    disconnectSocket()
-    useChatStore.getState().reset()
-    set({ user: null, token: null, error: null, isLoading: false })
+  reset: () => {
+    typingTimers = {}
+    set({
+      chats: [],
+      messages: {},
+      typingUsers: {},
+      activeChatId: null,
+      isLoadingChats: false,
+      isLoadingMessages: false,
+      error: null,
+    })
   },
 }))
