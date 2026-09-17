@@ -44,7 +44,7 @@ export default function ChatSidebar() {
       const { data } = await api.post('/chats', { username })
       const chat = data.chat || data
       const chatId = chat.id ?? chat._id
-      fetchChats()
+      await fetchChats()
       setModalOpen(false)
       setNewChatUsername('')
       selectChat(chatId)
