@@ -74,7 +74,7 @@ export const useChatStore = create((set, get) => ({
     if (!trimmed) return { ok: false }
 
     try {
-      const { data } = await api.post(`/chats/${chatId}/messages`, { text: trimmed })
+      const { data } = await api.post(`/chats/${chatId}/messages`, { content: trimmed })
       const message = normalizeMessage(data.message || data)
       get().addMessage(chatId, message)
       return { ok: true }
