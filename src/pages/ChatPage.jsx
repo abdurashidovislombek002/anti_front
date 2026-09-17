@@ -11,7 +11,7 @@ export default function ChatPage() {
   const selectChat = useChatStore((state) => state.selectChat)
   const fetchMessages = useChatStore((state) => state.fetchMessages)
 
-  const chat = chats.find((item) => item.id === chatId) || null
+  const chat = chats.find((item) => String(item.id) === String(chatId)) || null
 
   useEffect(() => {
     selectChat(chatId)
