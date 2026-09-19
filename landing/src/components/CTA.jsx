@@ -1,4 +1,6 @@
 export default function CTA() {
+  const appUrl = import.meta.env.VITE_APP_URL || 'https://anti-front.onrender.com';
+
   return (
     <section id="cta">
       <div className="container">
@@ -9,14 +11,14 @@ export default function CTA() {
             Hisob ochish bir daqiqa. Telefoningizda ham, kompyuteringizda ham bepul va cheksiz muloqot qiling.
           </p>
           <div className="cta-btns">
-            <a className="btn pri" href="#">
+            <a className="btn pri" href={`${appUrl}/register`}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" />
                 <path d="M9 12l2 2 4-4" />
               </svg>
               Ro'yxatdan o'tish
             </a>
-            <a className="btn ghost" href="http://localhost:5173" target="_blank" rel="noreferrer">
+            <a className="btn ghost" href={appUrl} target="_blank" rel="noreferrer">
               Ilovani ochish
             </a>
           </div>
