@@ -1,0 +1,17 @@
+export const colors = {
+  bg: '#0e1621',
+  bgDeep: '#0b111a',
+  sidebar: '#17212b',
+  sidebarHover: '#202b36',
+  inputBg: '#242c36',
+  inputBorder: '#2e3742',
+  accent: '#3390ec',
+  accentHover: '#4da3f7',
+  ownBubble: '#2b5278',
+  otherBubble: '#182533',
+  text: '#f5f5f5',
+  textSecondary: '#708499',
+  textMuted: '#5b6f83',
+  danger: '#ef5350',
+  border: 'rgba(255,255,255,0.06)',
+}

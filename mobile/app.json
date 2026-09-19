@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "Antigram",
+    "slug": "antigram",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0e1621",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0e1621"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.antigram.mobile"
+    },
+    "android": {
+      "package": "com.antigram.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#0e1621",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": ["CAMERA", "READ_MEDIA_IMAGES", "READ_EXTERNAL_STORAGE"]
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Antigram sizga rasm tanlash va yuborish uchun ruxsat so'raydi",
+          "cameraPermission": "Antigram kamera orqali suratga olish uchun ruxsat so'raydi"
+        }
+      ],
+      [
+        "expo-document-picker",
+        {
+          "documentsPermission": "Antigram fayl tanlash va yuborish uchun ruxsat so'raydi"
+        }
+      ]
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
